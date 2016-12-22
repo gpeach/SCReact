@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="444 678 17.189 15.462">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #444;
+      }
+    </style>
+  </defs>
+  <g id="group-159" transform="translate(444 677.999)">
+    <path id="path" class="cls-1" d="M8.282,3.192a.449.449,0,0,1-.448-.448V.726A.45.45,0,0,1,8.282.277H18.376a.449.449,0,0,1,.448.449V2.744a.449.449,0,0,1-.448.448Z" transform="translate(-1.635 -0.058)"/>
+    <path id="path-2" data-name="path" class="cls-1" d="M8.282,10.844a.449.449,0,0,1-.448-.448V8.378a.449.449,0,0,1,.448-.448H18.376a.449.449,0,0,1,.448.448V10.4a.449.449,0,0,1-.448.448Z" transform="translate(-1.635 -1.655)"/>
+    <path id="path-3" data-name="path" class="cls-1" d="M8.282,18.5a.449.449,0,0,1-.448-.449V16.031a.449.449,0,0,1,.448-.448H18.376a.449.449,0,0,1,.448.448v2.018a.45.45,0,0,1-.448.449Z" transform="translate(-1.635 -3.253)"/>
+    <circle id="ellipse" class="cls-1" cx="1.676" cy="1.676" r="1.676" transform="translate(0 0.001)"/>
+    <circle id="ellipse-2" data-name="ellipse" class="cls-1" cx="1.676" cy="1.676" r="1.676" transform="translate(0 6.056)"/>
+    <circle id="ellipse-3" data-name="ellipse" class="cls-1" cx="1.676" cy="1.676" r="1.676" transform="translate(0 12.111)"/>
+  </g>
+</svg>
