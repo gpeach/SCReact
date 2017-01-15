@@ -13,7 +13,7 @@
   "scripts": {
     "build": "./node_modules/.bin/webpack --color",
     "buildreact": "./node_modules/.bin/webpack --color --config webpack.config-react.js",
-    "dox": "./node_modules/.bin/jsdoc ./public_html/src/goodbye.js --destination ./public_html/docs",
+    "dox": "./node_modules/.bin/jsdoc ./public_html/src/app.jsx --destination ./public_html/docs",
     "karmatest": "./node_modules/karma/bin/karma start karma.conf.js",
     "jest": "jest --coverage"
   },

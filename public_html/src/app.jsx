@@ -24,7 +24,7 @@ var React = require('react');
                     Topic: {},
                     locked_id: '',
                     images: [],
-                    avatarObject: SymptomChecker.maleFrontBody,
+                    avatarObject: this.maleFrontBody,
                     language: Common.userLanguage(),
                     typeMale: "Male",
                     typeFemale: "Female",
@@ -82,7 +82,7 @@ var React = require('react');
     <TopNav setPage = {this.props.setPage} />
     <SideButtonsLeft  setAvatar={this.setAvatar} gender={this.props.gender} />
     <SideButtonsRight  setAvatar={this.setAvatar} />
-    <Avatar gender={this.props.gender} locked_id ={this.props.locked_id} />  
+    <Avatar  gender={this.props.gender} locked_id ={this.props.locked_id} />  
     <DisclaimerLink language={this.props.language} setPage={this.props.setPage} />
 </div>
                         )
@@ -160,9 +160,11 @@ var React = require('react');
         
         
         var Avatar = React.createClass({
+
             getInitialState: function () {
                 return {
                     
+                    //nuts and bolts
                     vendor: getVendor(),
                     debug: true,
                     avatarObject: this.maleFrontBody,
@@ -173,11 +175,13 @@ var React = require('react');
                     width: 0,
                     height: 0,
                     
+                    //outputs
                     Symptoms: {},
                     Topic: {},
                     
+                    //state vars
                     gender: 'Male',
-                    locked_id: 'goo',
+                    locked_id: '',
                     isZoomed: false,
                     typeMale: "Male",
                     typeFemale: "Female",
@@ -187,6 +191,17 @@ var React = require('react');
                     headMode: false
                     
                 };
+            },
+            hydrateAvatar: function (key, value) {
+                //console.log(avatarObject);
+                const goo = 'gap_prop';
+                
+                const newAvatar = {};
+                newAvatar[key] = value;
+                Object.assign(newAvatar, this.state.avatarObject);
+                this.setState({
+                    avatarObject: newAvatar
+                });
             },
             updateDimensions: function() {
                 var w = window,
@@ -216,6 +231,10 @@ var React = require('react');
                         img: {
                         },
                         overlay: {
+                            backgroundImage: "none",
+                            backgroundPosition: "0px 0px",
+                            display: "none",
+                            backgroundSize: "cover"
                         }
                     },
                     hotspots: {
@@ -692,7 +711,7 @@ var React = require('react');
             });
             });
                     SymptomChecker.hideSpinner();
-            },
+            },   
             setCSSMap: function (myObject, options) {
                 var that = this;               
             if (typeof options === "undefined") {
@@ -704,6 +723,7 @@ var React = require('react');
                     Common.debugMessage('photograf.height ' + photograf.height);
                     var avatar = document.getElementById('avatar-page');
                     avatar.style.maxHeight = photograf.height + 'px';
+                    that.hydrateAvatar('scale', photograf.width / photograf.height);
                             myObject.scale = photograf.width / photograf.height;
                             var tmpImg = new Image();
                             Common.debugMessage(that.state.width);
@@ -719,20 +739,21 @@ var React = require('react');
                                 }
                             }
                             Common.debugMessage('factor ' + factor);
+                            that.hydrateAvatar('paneHeight', that.state.height * factor);
                             myObject.paneHeight = that.state.height * factor;
+                            that.hydrateAvatar('paneWidth', that.state.height * myObject.scale * factor);
                             myObject.paneWidth = that.state.height * myObject.scale * factor;
                             Common.debugMessage('paneWidth ' + myObject.paneWidth);
                             Common.debugMessage('paneHeight ' + myObject.paneHeight);
                             Common.debugMessage('scale ' + myObject.scale);
-                            myObject.spriteWidth = myObject.paneWidth * myObject.paneTotal;
+                            that.hydrateAvatar('spriteWidth', myObject.paneWidth * myObject.paneTotal);
+                            //myObject.spriteWidth = myObject.paneWidth * myObject.paneTotal;
 //                            $('#overlay').css("background-image", "url(" + myObject.mapImage + ")").css('background-size', myObject.spriteWidth + 'px auto').css('background-position', '0px 0px').hide();
                             
                             document.querySelector("#overlay").style.backgroundImage = 'url(' + myObject.mapImage + ')';
                             document.querySelector("#overlay").style.backgroundSize = myObject.spriteWidth + 'px auto';
                             document.querySelector("#overlay").style.backgroundPosition = '0px 0px';
                             document.querySelector("#overlay").style.display = 'none';
-                            
-//                            $('#humanwrapper, #overlay, #hotspots, #human img').css('width', myObject.paneWidth + 'px');
                             document.querySelector("#humanwrapper").style.width = myObject.paneWidth + 'px';
                             document.querySelector("#overlay").style.width = myObject.paneWidth + 'px';
                             document.querySelector("#hotspots").style.width = myObject.paneWidth + 'px';
@@ -755,40 +776,65 @@ var React = require('react');
 //                            this.refs[prop].setAttribute('aria-label', myObject.ariaLabel[prop]);
 //                        }                       
 //                    }                 
-                    
-                    
+                                 
 //                    $.each(myObject.ariaLabel, function (key, value) {
 //                    $('#' + key).attr('aria-label', value);
 //                    });
                     return myObject;
             },
+
+            lock: function (arg) {
+                this.setState({
+            locked_id: arg
+            });
+    },
+            locked: function () {
+        if (this.locked_id !== '') {
+            return true;
+        } else {
+            return false;
+        }
+    },
+            unlock: function () {
+        this.setState({
+            locked_id: ''
+            });
+    },
             //turns on display of highlighted image
             hilightOn: function () {
-            if (this.locked_id !== false && this.locked_id !== '') {
-            Common.debugMessage("hilightOn");
-                    this.styles.humanWrapper.human.overlay.backgroundImage = SymptomChecker.avatarObject.mapImage;
-                    this.styles.humanWrapper.human.overlay.backgroundPosition = - (SymptomChecker.avatarObject.paneWidth * SymptomChecker.avatarObject.mapLegend[SymptomChecker.locked_id]) + 'px 0px';
-                    this.styles.humanWrapper.human.overlay.display = 'block';
-            }
+                var tempStyles = Object.assign({}, this.styles);
+                
+                if (this.state.locked_id !== false && this.state.locked_id !== '') {
+                    Common.debugMessage("locked_id " + this.state.locked_id);
+                    tempStyles.humanWrapper.human.overlay.backgroundImage = this.state.avatarObject.mapImage;
+                    tempStyles.humanWrapper.human.overlay.backgroundPosition = - (this.state.avatarObject.paneWidth * this.state.avatarObject.mapLegend[this.state.locked_id]) + 'px 0px';
+                    tempStyles.humanWrapper.human.overlay.display = 'block';
+                    this.setState({styles: tempStyles});
+                    //this.styles = tempStyles;
+                    
+                }
             },
-            hotSpotClick: function () {
-            SymptomChecker.lock(this.id);
-                    this.hilightOn();
-                    SymptomChecker.showSpinner();
-                    setTimeout(function () {
-                    $.when(ApiMethods.checkTopicTableAdultFiltered('#list-query-listing-items', SymptomChecker.avatarObject.gender, SymptomChecker.avatarObject.filter[SymptomChecker.locked_id], SymptomChecker.avatarObject.value[SymptomChecker.locked_id], SymptomChecker.avatarObject.keywords[SymptomChecker.locked_id][SymptomChecker.language])).then(function () {
-                    SymptomChecker.hideSpinner();
-                            //showListPage();
-    //                $.mobile.changePage("#list-page", {transition: 'fade'});
-                            SymptomChecker.selectButton('.showlist');
-                            SymptomChecker.unlock();
-                            this.hilightOff();
-                            SymptomChecker.focusIt("li:first-child a");
-                    });
-                    }, 2000);
+            hotSpotClick: function (event) {
+                Common.debugMessage("clicked " + event.target.id);
+                this.setState({
+            locked_id: event.target.id
+            }, this.hilightOn);
+
+                    //SymptomChecker.showSpinner();
+//                    setTimeout(function () {
+//                    $.when(ApiMethods.checkTopicTableAdultFiltered('#list-query-listing-items', SymptomChecker.avatarObject.gender, SymptomChecker.avatarObject.filter[SymptomChecker.locked_id], SymptomChecker.avatarObject.value[SymptomChecker.locked_id], SymptomChecker.avatarObject.keywords[SymptomChecker.locked_id][SymptomChecker.language])).then(function () {
+//                    SymptomChecker.hideSpinner();
+//                            //showListPage();
+//    //                $.mobile.changePage("#list-page", {transition: 'fade'});
+//                            SymptomChecker.selectButton('.showlist');
+//                            this.unlock();
+//                            this.hilightOff();
+//                            SymptomChecker.focusIt("li:first-child a");
+//                    });
+//                    }, 2000);
             },
             hilightOff: function () {
-            if (SymptomChecker.locked_id === false) {
+            if (this.locked_id === false) {
             Common.debugMessage("hilightOff");
                     this.styles.humanWrapper.human.overlay.backgroundPosition = '1000px 0px';
                     this.styles.humanWrapper.human.overlay.display = 'none';
@@ -803,31 +849,31 @@ var React = require('react');
     <div id="overlay" style={this.styles.humanWrapper.human.overlay} className=""></div>
     </div>
     <div id="hotspots" className="phone tablet" aria-labelledby="human">
-    <div tabIndex="0" role="link" aria-label="head" className="fullbody front tinted spotlabel areaHover" id="head" ref="head" ></div>
-    <div tabIndex="0" role="link" aria-label="face" className="fullbody front tinted spotlabel areaHover" id="face" ref="face"></div>
-    <div tabIndex="0" role="link" aria-label="neck" className="fullbody front tinted spotlabel areaHover" id="neck"></div>
-    <div tabIndex="0" role="link" aria-label="chest" className="fullbody front tinted spotlabel areaHover" id="chest"></div>
-    <div tabIndex="0" role="link" aria-label="arms" className="fullbody front tinted spotlabel areaHover" id="l_arm"></div>
-    <div tabIndex="0" role="link" aria-label="arms" className="fullbody front tinted spotlabel areaHover" id="r_arm"></div>
-    <div tabIndex="0" role="link" aria-label="abdomen" className="fullbody front tinted spotlabel areaHover" id="abdomen"></div>
-    <div tabIndex="0" role="link" aria-label="genitals" className="fullbody front tinted spotlabel areaHover" id="genitals"></div>
-    <div tabIndex="0" role="link" aria-label="legs" className="fullbody front tinted spotlabel areaHover" id="legs"></div>
-    <div tabIndex="0" role="link" aria-label="head" className="fullbody back tinted spotlabel areaHover" id="head"></div>
-    <div tabIndex="0" role="link" aria-label="neck" className="fullbody back tinted spotlabel areaHover" id="neck"></div>
-    <div tabIndex="0" role="link" aria-label="back" className="fullbody back tinted spotlabel areaHover" id="back"></div>
-    <div tabIndex="0" role="link" aria-label="arms" className="fullbody back tinted spotlabel areaHover" id="l_arm"></div>
-    <div tabIndex="0" role="link" aria-label="arms" className="fullbody back tinted spotlabel areaHover" id="r_arm"></div>
-    <div tabIndex="0" role="link" aria-label="genitals" className="fullbody back tinted spotlabel areaHover" id="genitals"></div>
-    <div tabIndex="0" role="link" aria-label="legs" className="fullbody back tinted spotlabel areaHover" id="legs"></div>
-    <div tabIndex="0" role="link" aria-label="head" className="head front tinted spotlabel areaHover" id="ff_head"></div>
-    <div tabIndex="0" role="link" aria-label="ears" className="head front tinted spotlabel areaHover" id="ff_ears"></div>
-    <div tabIndex="0" role="link" aria-label="eyes" className="head front tinted spotlabel areaHover" id="ff_eyes"></div>
-    <div tabIndex="0" role="link" aria-label="nose" className="head front tinted spotlabel areaHover" id="ff_nose"></div>
-    <div tabIndex="0" role="link" aria-label="mouth" className="head front tinted spotlabel areaHover" id="ff_mouth"></div>
-    <div tabIndex="0" role="link" aria-label="neck" className="head front tinted spotlabel areaHover" id="ff_neck"></div>
-    <div tabIndex="0" role="link" aria-label="head" className="head back tinted spotlabel areaHover" id="fb_head"></div>
-    <div tabIndex="0" role="link" aria-label="ears" className="head back tinted spotlabel areaHover" id="fb_ears"></div>
-    <div tabIndex="0" role="link" aria-label="neck" className="head back tinted spotlabel areaHover" id="fb_neck"></div>
+    <div tabIndex="0" role="link" aria-label="head" className="fullbody front tinted spotlabel areaHover" id="head" ref="head" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="face" className="fullbody front tinted spotlabel areaHover" id="face" ref="face" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="neck" className="fullbody front tinted spotlabel areaHover" id="neck" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="chest" className="fullbody front tinted spotlabel areaHover" id="chest" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="arms" className="fullbody front tinted spotlabel areaHover" id="l_arm" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="arms" className="fullbody front tinted spotlabel areaHover" id="r_arm" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="abdomen" className="fullbody front tinted spotlabel areaHover" id="abdomen" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="genitals" className="fullbody front tinted spotlabel areaHover" id="genitals" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="legs" className="fullbody front tinted spotlabel areaHover" id="legs" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="head" className="fullbody back tinted spotlabel areaHover" id="head" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="neck" className="fullbody back tinted spotlabel areaHover" id="neck" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="back" className="fullbody back tinted spotlabel areaHover" id="back" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="arms" className="fullbody back tinted spotlabel areaHover" id="l_arm" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="arms" className="fullbody back tinted spotlabel areaHover" id="r_arm" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="genitals" className="fullbody back tinted spotlabel areaHover" id="genitals" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="legs" className="fullbody back tinted spotlabel areaHover" id="legs" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="head" className="head front tinted spotlabel areaHover" id="ff_head" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="ears" className="head front tinted spotlabel areaHover" id="ff_ears" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="eyes" className="head front tinted spotlabel areaHover" id="ff_eyes" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="nose" className="head front tinted spotlabel areaHover" id="ff_nose" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="mouth" className="head front tinted spotlabel areaHover" id="ff_mouth" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="neck" className="head front tinted spotlabel areaHover" id="ff_neck" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="head" className="head back tinted spotlabel areaHover" id="fb_head" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="ears" className="head back tinted spotlabel areaHover" id="fb_ears" onClick={this.hotSpotClick}></div>
+    <div tabIndex="0" role="link" aria-label="neck" className="head back tinted spotlabel areaHover" id="fb_neck" onClick={this.hotSpotClick}></div>
     </div>
     </div>
                     )
