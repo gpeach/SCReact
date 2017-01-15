@@ -1,6 +1,6 @@
 {
   "presets": ["latest", "react"],
   "plugins": [["__coverage__", {"only": "public_html/src/**"}],
-               "add-module-exports"],
+               "add-module-exports", "transform-es2015-destructuring", "transform-object-rest-spread"],
   "sourceMap": "both"
 }
