@@ -5,8 +5,10 @@ var sloc = require('gulp-sloc');
 var exec = require('exec');
 
 gulp.task('sloc', function () {
-    gulp.src(['./public_html/src/**/*.js'])
-            .pipe(sloc());
+    gulp.src(['./public_html/src/**/*.*'])
+            .pipe(sloc({
+                tolerant: true
+            }));
 });
 
 //Coverage sync
@@ -39,6 +41,20 @@ gulp.task('test', function () {
 
 gulp.task('build', function () {
     exec('./node_modules/.bin/webpack --color', function (err, stdout, stderr) {
+    console.log(stdout);
+    console.log(stderr);
+  });
+});
+
+gulp.task('jsxformat', function () {
+  exec('esformatter -i public_html/src/app.jsx', function (err, stdout, stderr) {
+    console.log(stdout);
+    console.log(stderr);
+  });
+});
+
+gulp.task('jsxformatall', function () {
+  exec('esformatter -i public_html/src/**/*.jsx', function (err, stdout, stderr) {
     console.log(stdout);
     console.log(stderr);
   });

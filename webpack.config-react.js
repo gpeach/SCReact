@@ -8,7 +8,7 @@ module.exports = {
     },
     resolve: {
         // you can now require('file') instead of require('file.coffee')
-    extensions: ['', '.js', '.jsx'],
+        extensions: ['', '.js', '.jsx'],
         root: path.resolve(__dirname)
     },
     plugins: [],
@@ -21,6 +21,11 @@ module.exports = {
                 query: {
                     presets: ['latest', 'react']
                 }
+            },
+            {
+                test: /\.json$/,
+                exclude: /node_modules/,
+                loader: 'json-loader'
             },
             {
                 test: /\.jsx$/,
