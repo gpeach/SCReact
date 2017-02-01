@@ -3,8 +3,6 @@ import { getVendor } from '../vendors';
 import { Common } from '../common-code';
 import { ApiMethods } from '../api-methods';
 import { SymptomChecker } from '../symptom-checker';
-import $ from 'jquery';
-
 
 /**
  * 
@@ -457,11 +455,10 @@ class Avatar extends React.Component {
     this.state = {
       //nuts and bolts
       vendor: getVendor(),
-      debug: true,
-      avatarObject: this.maleFrontBody,
+      debug: false,
+      avatarObject: null,
       images: [],
       language: Common.userLanguage(),
-      deviceType: "medium",
       getMobileOperatingSystem: ApiMethods.getMobileOperatingSystem(),
 
       //outputs
@@ -469,8 +466,8 @@ class Avatar extends React.Component {
       Topic: {},
 
       //state vars
-      gender: 'Male',
-      locked_id: '',
+      gender: '',
+      locked_id: false,
       isZoomed: false,
       typeMale: "Male",
       typeFemale: "Female",
@@ -480,10 +477,10 @@ class Avatar extends React.Component {
       headMode: false,
 
       //dynamic css
-      avatarBackgroundImage: '',
-      avatarBackgroundSize: '',
-      avatarBackgroundPosition: '',
-      avatarDisplay: '',
+      overlayBackgroundImage: '',
+      overlayBackgroundSize: '',
+      overlayBackgroundPosition: '',
+      overlayDisplay: '',
       width: 0,
       height: 0,
       humanImageWidth: '',
@@ -497,43 +494,30 @@ class Avatar extends React.Component {
     this.updateDimensions = this.updateDimensions.bind(this);
     this.hilightOn = this.hilightOn.bind(this);
     this.setCSSMap = this.setCSSMap.bind(this);
-    
-
   }
 
-  hydrateAvatar(key, value) {
-    const newAvatar = {};
-    newAvatar[key] = value;
-    Object.assign(newAvatar, this.state.avatarObject);
-    this.setState({
-      avatarObject: newAvatar
-    });
-  }
 
   updateDimensions() {
+    Common.debugMessage('updateDimensions');
     var w = window,
       d = document,
       documentElement = d.documentElement,
       body = d.getElementsByTagName('body')[0],
       width = w.innerWidth || documentElement.clientWidth || body.clientWidth,
       height = w.innerHeight || documentElement.clientHeight || body.clientHeight;
-    console.info('updateDimensions');
     this.setState({
       width,
       height
     });
-    this.setState({
-      avatarObject: this.setCSSMap(this.state.avatarObject)
-    });
+    if (this.state.avatarObject !== null) {
+      this.setState({
+        avatarObject: this.setCSSMap(this.state.avatarObject)
+      });
+    }
   }
 
   componentWillMount() {
-    console.info('componentWillMount');
-    this.updateDimensions();
-  }
-
-  componentDidMount() {
-    console.info('componentDidMount');
+    Common.debugMessage('componentWillMount');
     window.addEventListener("resize", this.updateDimensions);
     var query = SymptomChecker.getQueryParams(document.location.search);
     if (query.gender === 'F' || query.gender === 'f') {
@@ -547,44 +531,15 @@ class Avatar extends React.Component {
         bodyType: this.typeMale
       });
     }
-    this.updateDimensions();
+  }
 
-  //this.avatarObject = this.setCSSMap(this.avatarObject);
-  //document.getElementById( 'body' ).style.display = 'block';
+  componentDidMount() {
+    Common.debugMessage('componentDidMount');
+    this.updateDimensions();
   }
 
   componentWillUnmount() {
     window.removeEventListener("resize", this.updateDimensions);
-  }
-
-
-
-  selectButton(arg) {
-    if (arg === '.showbody') {
-      $(".showbody").addClass("button-selected");
-      $(".showlist").removeClass("button-selected");
-    } else {
-      $(".showlist").addClass("button-selected");
-      $(".showbody").removeClass("button-selected");
-    }
-  }
-
-  preload(images, callback) {
-    SymptomChecker.showSpinner();
-    var count = images.length;
-    if (count === 0) {
-      callback();
-    }
-    var loaded = 0;
-    $(images).each(function() {
-      $('<img>').attr('src', this).load(function() {
-        loaded++;
-        if (loaded === count) {
-          callback();
-        }
-      });
-    });
-    SymptomChecker.hideSpinner();
   }
 
   setCSSMap(myObject, options) {
@@ -595,91 +550,45 @@ class Avatar extends React.Component {
     photograf.onload = () => {
       Common.debugMessage('photograf.width ' + photograf.width);
       Common.debugMessage('photograf.height ' + photograf.height);
-      var avatar = document.getElementById('avatar-page');
-      avatar.style.maxHeight = photograf.height + 'px';
-      this.hydrateAvatar('scale', photograf.width / photograf.height);
       myObject.scale = photograf.width / photograf.height;
       var tmpImg = new Image();
-      Common.debugMessage(this.state.width);
-      Common.debugMessage(this.state.height);
       tmpImg.onload = () => {
-        Common.debugMessage('options.factor ' + options.factor);
         var factor = .7;
         if (options.factor) {
           var maxAvatarWidth = (this.state.width * .9) - (document.getElementByClassName("side-buttons").offsetWidth * 2);
-          Common.debugMessage('maxAvatarWidth ' + maxAvatarWidth);
           if (this.state.height * myObject.scale * factor > maxAvatarWidth) {
             factor = maxAvatarWidth / this.state.width;
           }
         }
-        Common.debugMessage('factor ' + factor);
-        this.hydrateAvatar('paneHeight', this.state.height * factor);
         myObject.paneHeight = this.state.height * factor;
-        this.hydrateAvatar('paneWidth', this.state.height * myObject.scale * factor);
         myObject.paneWidth = this.state.height * myObject.scale * factor;
+        myObject.spriteWidth = myObject.paneWidth * myObject.paneTotal;
+
+        Common.debugMessage('factor ' + factor);
         Common.debugMessage('paneWidth ' + myObject.paneWidth);
         Common.debugMessage('paneHeight ' + myObject.paneHeight);
         Common.debugMessage('scale ' + myObject.scale);
-        myObject.spriteWidth = myObject.paneWidth * myObject.paneTotal;
-        this.hydrateAvatar('spriteWidth', myObject.paneWidth * myObject.paneTotal);
-        Common.debugMessage('avatarBackgroundSize ' + myObject.spriteWidth + 'px');
-        //TODO - change style changes to state changes to fix width problems
+        Common.debugMessage('spriteWidth ' + myObject.spriteWidth);
 
         this.setState({
-
-          //overlay
-          avatarBackgroundImage: "url('" + myObject.mapImage + "')",
-          avatarBackgroundPosition: '0px 0px',
-          avatarBackgroundSize: myObject.spriteWidth + 'px',
-          //avatarBackgroundSize: 'cover',
-          avatarDisplay: 'none',
-          width: myObject.paneWidth + 'px',
-          height: myObject.paneHeight + 'px',
-          humanImageWidth: myObject.paneWidth + 'px',
-          humanImageHeight: myObject.paneHeight + 'px',
+          overlayBackgroundImage: "url('" + myObject.mapImage + "')",
+          overlayBackgroundPosition: '0px 0px',
+          overlayBackgroundSize: myObject.spriteWidth,
+          overlayDisplay: 'none',
+          paneWidth: myObject.paneWidth,
+          paneHeight: myObject.paneHeight,
+          humanImageWidth: myObject.paneWidth,
+          humanImageHeight: myObject.paneHeight,
+          humanImageAlt: myObject.alt,
+          humanImageSrc: myObject.basePane,
           humanImageDisplay: 'block',
-          hotspotsWidth: myObject.paneWidth + 'px',
-          humanWrapperWidth: myObject.paneWidth + 'px'
+          hotspotsWidth: myObject.paneWidth,
+          humanWrapperWidth: myObject.paneWidth
         });
-        console.warn(this.state.avatarObject.mapImage);
-        console.warn(this.state.avatarBackgroundImage);
-        console.warn(this.state.avatarBackgroundPosition);
-        console.warn(this.state.avatarBackgroundSize);
-
-        //        document.querySelector("#overlay").style.backgroundImage = 'url(' + myObject.mapImage + ')';
-        //        document.querySelector("#overlay").style.backgroundSize = myObject.spriteWidth + 'px auto';
-        //        document.querySelector("#overlay").style.backgroundPosition = '0px 0px';
-        //        document.querySelector("#overlay").style.display = 'none';
-        //        document.querySelector("#overlay").style.width = myObject.paneWidth + 'px';        
-
-        //        document.querySelector("#human img").style.width = myObject.paneWidth + 'px';
-        //        document.querySelector("#human img").style.height = myObject.paneHeight + 'px';
-        //        document.querySelector("#human img").style.display = "block";
-
-        //        document.querySelector("#hotspots").style.width = myObject.paneWidth + 'px';       
-
-      //        document.querySelector("#humanwrapper").style.width = myObject.paneWidth + 'px';
       };
-      //TODO - set attributes with vanilla js
-      $('#human img').attr("src", myObject.basePane);
-      $('#human img').attr("alt", myObject.alt);
-      tmpImg.src = $('#human img').attr('src');
+      tmpImg.src = myObject.basePane;
     };
     photograf.src = myObject.basePane;
-    // TODO - aria labels
-
-    //                    for (var prop in myObject.ariaLabel ) {
-    //                        console.log(prop);
-    //                        console.log(myObject.ariaLabel[prop]);
-    //                        console.log(this.refs);
-    //                        if( myObject.ariaLabel[prop] !== null && myObject.ariaLabel[prop] !== '' ){
-    //                            this.refs[prop].setAttribute('aria-label', myObject.ariaLabel[prop]);
-    //                        }                       
-    //                    }                 
-
-    //                    $.each(myObject.ariaLabel, function (key, value) {
-    //                    $('#' + key).attr('aria-label', value);
-    //                    });
     return myObject;
   }
 
@@ -705,54 +614,45 @@ class Avatar extends React.Component {
 
   //turns on display of highlighted image
   hilightOn() {
-    if (this.state.locked_id !== false && this.state.locked_id !== '') {
-      Common.debugMessage("locked_id " + this.state.locked_id);
-      this.setState({
-        avatarBackgroundImage: this.state.avatarObject.mapImage,
-        avatarBackgroundPosition: -(this.state.avatarObject.paneWidth * this.state.avatarObject.mapLegend[this.state.locked_id]) + 'px 0px',
-        avatarDisplay: 'block'
-      });
-    }
+    this.setState({
+      overlayBackgroundImage: this.state.avatarObject.mapImage,
+      overlayBackgroundPosition: -(Math.round(this.state.avatarObject.paneWidth * this.state.avatarObject.mapLegend[this.state.locked_id])) + 'px 0px',
+      overlayDisplay: 'block'
+    });
+
+    setTimeout(() => {
+      this.props.setAvatar(this.state.avatarObject);
+      this.props.setLockedId(this.state.locked_id);
+      this.props.setPage('List');
+    }, 2000);
   }
 
   hotSpotClick(event) {
-    Common.debugMessage("clicked " + event.target.id);
-    this.setState({
-      locked_id: event.target.id
-    }, this.hilightOn);
-
-  //SymptomChecker.showSpinner();
-  //                    setTimeout(function () {
-  //                    $.when(ApiMethods.checkTopicTableAdultFiltered('#list-query-listing-items', SymptomChecker.avatarObject.gender, SymptomChecker.avatarObject.filter[SymptomChecker.locked_id], SymptomChecker.avatarObject.value[SymptomChecker.locked_id], SymptomChecker.avatarObject.keywords[SymptomChecker.locked_id][SymptomChecker.language])).then(function () {
-  //                    SymptomChecker.hideSpinner();
-  //                            //showListPage();
-  //    //                $.mobile.changePage("#list-page", {transition: 'fade'});
-  //                            SymptomChecker.selectButton('.showlist');
-  //                            this.unlock();
-  //                            this.hilightOff();
-  //                            SymptomChecker.focusIt("li:first-child a");
-  //                    });
-  //                    }, 2000);
+      if(this.state.locked_id == false){
+      this.setState({
+        locked_id: event.target.id
+      }, this.hilightOn);
+  }
   }
 
   hilightOff() {
     if (this.locked_id === false) {
       Common.debugMessage("hilightOff");
-      this.styles.humanWrapper.human.overlay.backgroundPosition = '1000px 0px';
-      this.styles.humanWrapper.human.overlay.display = 'none';
-    //            $('#overlay').stop(true, true).hide().css('background-position', '1000px 0px');
+      this.setState({
+        overlayBackgroundPosition: '0px 0px',
+        overlayDisplay: 'none'
+      });
     }
   }
 
   render() {
-      console.warn('rendering...' + this.state.avatarBackgroundSize)
     return (
-      <div id="humanwrapper" style={ { width: this.state.humanWrapperWidth } } className="phone tablet">
+      <div id="humanwrapper" style={ { width: Math.round(this.state.humanWrapperWidth) + 'px' } } className="phone tablet">
         <div id="human" className="phone tablet" tabIndex="0">
-          <img style={ { width: this.state.humanImageWidth, height: this.state.humanImageHeight, display: this.state.humanImageDisplay } } aria-live="assertive" src="../images/male/body/male_body_new_2.png" alt="Male Avatar" />
-          <div id="overlay" style={ { backgroundPosition: this.state.avatarBackgroundPosition, backgroundImage: this.state.avatarBackgroundImage, display: this.state.avatarDisplay, width: this.state.width, height: this.state.humanImageHeight, backgroundSize: this.state.avatarBackgroundSize } } className=""></div>
+          <img style={ { width: Math.round(this.state.humanImageWidth) + 'px', height: Math.round(this.state.humanImageHeight) + 'px', display: this.state.humanImageDisplay } } aria-live="assertive" src={ this.state.humanImageSrc } alt={ this.state.humanImageAlt } />
+          <div id="overlay" style={ { backgroundPosition: this.state.overlayBackgroundPosition, backgroundSize: Math.round(this.state.overlayBackgroundSize) + 'px', backgroundImage: this.state.overlayBackgroundImage, display: this.state.overlayDisplay, width: Math.round(this.state.humanImageWidth) + 'px', height: Math.round(this.state.humanImageHeight) + 'px' } } className=""></div>
         </div>
-        <div id="hotspots" style={ { width: this.state.hotspotsWidth } } className="phone tablet" aria-labelledby="human">
+        <div id="hotspots" style={ { width: Math.round(this.state.hotspotsWidth) + 'px' } } className="phone tablet" aria-labelledby="human">
           <div tabIndex="0" role="link" aria-label="head" className="fullbody front tinted spotlabel areaHover" id="head" onClick={ this.hotSpotClick }></div>
           <div tabIndex="0" role="link" aria-label="face" className="fullbody front tinted spotlabel areaHover" id="face" onClick={ this.hotSpotClick }></div>
           <div tabIndex="0" role="link" aria-label="neck" className="fullbody front tinted spotlabel areaHover" id="neck" onClick={ this.hotSpotClick }></div>
